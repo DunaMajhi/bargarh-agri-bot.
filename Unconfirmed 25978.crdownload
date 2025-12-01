@@ -13,7 +13,7 @@ def load_data():
 knowledge_base = load_data()
 
 # Use the key hardcoded for now to avoid re-typing
-api_key = "AIzaSyCNGzchcVOnhXPDrAaqedHcY8fs52hLMOg"
+api_key = st.secrets["GOOGLE_API_KEY"]
 
 st.title("🌾 Bargarh Krishi Sahayak")
 user_query = st.text_area("Describe the problem:", placeholder="Example: Grains are empty and smell bad")
