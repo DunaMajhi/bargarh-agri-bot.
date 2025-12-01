@@ -39,36 +39,41 @@ user_text = st.text_area("Or type here:", placeholder="e.g., Matiagundhi lagiche
 # --- LOGIC ENGINE ---
 if st.button("🔍 Diagnose"):
     if not api_key:
-        st.error("⚠️ API Key missing.")
+        st.error("⚠ API Key missing.")
         st.stop()
         
     genai.configure(api_key=api_key)
 
-    # --- 1. SYSTEM INSTRUCTION (The New, Smarter Way) ---
-    # We define the personality here, separate from the user input.
+    # --- 1. DEFINE THE BRAIN (System Instruction) ---
+    # This acts as the "Subconscious" of the AI. It cannot be overridden easily.
+    # Note: We put the JSON Database HERE, so it's always available.
     sys_instruction = f"""
-    Role: Agricultural Expert for Bargarh, Odisha.
+    You are an expert agricultural AI for Bargarh, Odisha.
     You understand Sambalpuri/Odia audio and text.
     
-    Database: {json.dumps(knowledge_base)}
+    YOUR KNOWLEDGE BASE (JSON):
+    {json.dumps(knowledge_base)}
     
-    Rules:
-    1. If input is Sambalpuri, translate internally.
-    2. OUTPUT MUST BE IN ODIA SCRIPT (Sambalpuri Style).
-    3. Format the answer:
-       - 🛑 Roga (Disease Name)
-       - 💊 Aushadh (Medicine Name)
-       - 💧 Matra (Dosage)
-    4. Keep it simple and direct.
+    STRICT RULES:
+    1. If the input is in Sambalpuri, translate it internally.
+    2. Match symptoms ONLY from the provided JSON Knowledge Base.
+    3. OUTPUT MUST BE IN ODIA SCRIPT (Sambalpuri Style).
+    4. Structure the answer exactly like this:
+       - 🛑 Roga: [Name]
+       - 💊 Aushadh: [Chemical]
+       - 💧 Matra: [Dosage]
+    5. If the disease is not in the JSON, say "I don't know" in Sambalpuri.
     """
 
-    # Initialize the model with the instruction locked in
+    # --- 2. INITIALIZE MODEL ---
+    # We load the instruction ONCE when creating the model object
     model = genai.GenerativeModel(
         'gemini-2.0-flash',
         system_instruction=sys_instruction
     )
 
-    # --- 2. PREPARE USER INPUT ---
+    # --- 3. PREPARE USER INPUT ---
+    # Now we only send the user's specific question, not the whole prompt again
     inputs_to_send = []
     
     if audio:
@@ -78,10 +83,10 @@ if st.button("🔍 Diagnose"):
         st.info("📝 Padhuchhe... (Reading...)")
         inputs_to_send.append(user_text)
     else:
-        st.warning("⚠️ Please speak or type something!")
+        st.warning("⚠ Please speak or type something!")
         st.stop()
 
-    # --- 3. GET RESPONSE ---
+    # --- 4. GET RESPONSE ---
     try:
         with st.spinner("🤖 Bhabuchhe... (Thinking...)"):
             response = model.generate_content(inputs_to_send)
@@ -91,7 +96,7 @@ if st.button("🔍 Diagnose"):
             st.markdown(f"### 📢 Uttar (Answer):")
             st.markdown(ai_text_odia)
             
-            # Generate Audio (Using Hindi engine for Indian accent)
+            # Generate Audio (Hindi engine for Indian accent)
             tts = gTTS(text=ai_text_odia, lang='hi')
             sound_file = io.BytesIO()
             tts.write_to_fp(sound_file)
