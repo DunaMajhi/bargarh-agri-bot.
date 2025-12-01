@@ -1,0 +1,109 @@
+[
+  {
+    "id": "rice_001",
+    "name_english": "Yellow Stem Borer",
+    "name_scientific": "Scirpophaga incertulas",
+    "name_local_sambalpuri": "Gendi Poka",
+    "symptoms_keywords": [
+      "dead heart",
+      "white ear",
+      "drying central shoot",
+      "hole in stem"
+    ],
+    "treatment_chemical": [
+      {
+        "chemical_name": "Chlorantraniliprole 0.4% GR",
+        "brand_examples": [
+          "Ferterra",
+          "Virtako"
+        ],
+        "dosage": "4 kg per acre"
+      }
+    ]
+  },
+  {
+    "id": "rice_002",
+    "name_english": "Brown Plant Hopper",
+    "name_scientific": "Nilaparvata lugens",
+    "name_local_sambalpuri": "Matiagundhi",
+    "symptoms_keywords": [
+      "hopper burn",
+      "sudden drying of tillers",
+      "browning"
+    ],
+    "treatment_chemical": [
+      {
+        "chemical_name": "Imidacloprid 17.8% SL",
+        "brand_examples": [
+          "Confidor",
+          "Imida"
+        ],
+        "dosage": "100 ml per acre"
+      }
+    ]
+  },
+  {
+    "id": "rice_003",
+    "name_english": "Rice Blast",
+    "name_scientific": "Magnaporthe oryzae",
+    "name_local_sambalpuri": "Marua Rog",
+    "symptoms_keywords": [
+      "spindle shaped spots",
+      "grey center spots",
+      "burnt appearance",
+      "neck rot"
+    ],
+    "treatment_chemical": [
+      {
+        "chemical_name": "Tricyclazole 75% WP",
+        "brand_examples": [
+          "Baan",
+          "Sivic"
+        ],
+        "dosage": "120g per acre"
+      }
+    ]
+  },
+  {
+    "id": "rice_004",
+    "name_english": "Sheath Blight",
+    "name_scientific": "Rhizoctonia solani",
+    "name_local_sambalpuri": "Khol Poda / Patra Poda",
+    "symptoms_keywords": [
+      "snake skin pattern",
+      "irregular spots on sheath",
+      "drying of leaves"
+    ],
+    "treatment_chemical": [
+      {
+        "chemical_name": "Hexaconazole 5% SC",
+        "brand_examples": [
+          "Contaf",
+          "Sitara"
+        ],
+        "dosage": "400ml per acre"
+      }
+    ]
+  },
+  {
+    "id": "rice_005",
+    "name_english": "Gundhi Bug",
+    "name_scientific": "Leptocorisa acuta",
+    "name_local_sambalpuri": "Gundhi Kira",
+    "symptoms_keywords": [
+      "bad smell",
+      "empty grains",
+      "chaffy grains"
+    ],
+    "treatment_chemical": [
+      {
+        "chemical_name": "Malathion 5% Dust",
+        "brand_examples": [
+          "Cythion",
+          "Malathion 50"
+        ],
+        "dosage": "10kg per acre (Dusting)"
+      }
+    ]
+  }
+]
