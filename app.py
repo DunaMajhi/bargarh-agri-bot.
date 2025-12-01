@@ -91,7 +91,7 @@ if st.button("🔍 Diagnose"):
             
             # B. Generate Audio (Text-to-Speech)
             # We use 'or' (Odia) for the accent
-            tts = gTTS(text=ai_text_odia, lang='or')
+            tts = gTTS(text=ai_text_odia, lang='hi')
             
             # Save to memory (not disk) to play instantly
             sound_file = io.BytesIO()
