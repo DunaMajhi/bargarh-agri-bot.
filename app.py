@@ -7,7 +7,7 @@ import io
 from PIL import Image
 
 # --- PAGE CONFIGURATION ---
-st.set_page_config(page_title="Chaasi Sahayak", page_icon="🌾")
+st.set_page_config(page_title="Bargarh Krishi Sahayak", page_icon="🌾")
 
 # --- LOAD DATA ---
 @st.cache_data
@@ -27,22 +27,30 @@ with st.sidebar:
 
 # --- MAIN INTERFACE ---
 st.title("🌾 Bargarh Krishi Sahayak")
-st.markdown("### 👁 Dekhun, Sunun au Bujhun")
+st.markdown("###  Dekhun, Sunun au Bujhun")
 st.caption("See, Listen, and Understand")
 
 # --- INPUT SECTION (3 MODES) ---
-tab1, tab2, tab3 = st.tabs(["📸 Camera (Photo)", "🎤 Voice (Audio)", "✍ Text (Type)"])
+tab1, tab2, tab3 = st.tabs(["📸 Photo (Camera/Upload)", "🎤 Voice (Audio)", "✍ Text (Type)"])
 
 image_input = None
 audio_input = None
 text_input = None
 
 with tab1:
-    st.write("Take a photo of the affected crop:")
+    st.write("### Option 1: Take a Photo")
     camera_file = st.camera_input("Open Camera")
+    
+    st.write("### Option 2: Upload from Gallery")
+    upload_file = st.file_uploader("Choose an image...", type=['jpg', 'jpeg', 'png'])
+
+    # Logic: Prioritize Camera, then Upload
     if camera_file:
         image_input = Image.open(camera_file)
-        st.success("Photo captured!")
+        st.success("📸 Photo captured from Camera!")
+    elif upload_file:
+        image_input = Image.open(upload_file)
+        st.success("📂 Photo loaded from Gallery!")
 
 with tab2:
     st.write("Tap to Speak (Sambalpuri/Odia):")
@@ -72,7 +80,7 @@ if st.button("🔍 Diagnose"):
     1. If an IMAGE is provided, analyze visual symptoms (spots, color, pests).
     2. Map symptoms to the Database.
     3. OUTPUT MUST BE IN ODIA SCRIPT (Sambalpuri Style).
-    4. Format:
+    4. Structure the answer like this:
        - 🛑 Roga (Disease Name)
        - 💊 Aushadh (Medicine Name)
        - 💧 Matra (Dosage)
@@ -86,7 +94,6 @@ if st.button("🔍 Diagnose"):
     # --- 2. PREPARE INPUTS ---
     inputs_to_send = []
     
-    # We append whatever the user provided. Gemini handles mixed inputs!
     if image_input:
         st.info("👁 Photo dekhuchhe... (Analyzing Photo...)")
         inputs_to_send.append(image_input)
