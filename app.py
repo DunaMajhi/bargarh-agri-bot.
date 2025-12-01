@@ -4,9 +4,10 @@ import json
 from streamlit_mic_recorder import mic_recorder
 from gtts import gTTS
 import io
+from PIL import Image
 
 # --- PAGE CONFIGURATION ---
-st.set_page_config(page_title="Bargarh Krishi Sahayak", page_icon="🌾")
+st.set_page_config(page_title="Chaasi Sahayak", page_icon="🌾")
 
 # --- LOAD DATA ---
 @st.cache_data
@@ -26,15 +27,31 @@ with st.sidebar:
 
 # --- MAIN INTERFACE ---
 st.title("🌾 Bargarh Krishi Sahayak")
-st.markdown("### 🗣️ Sunun au Samjhun (Listen & Understand)")
+st.markdown("### 👁 Dekhun, Sunun au Bujhun")
+st.caption("See, Listen, and Understand")
 
-# --- AUDIO INPUT ---
-col1, col2 = st.columns([1, 4])
-with col1:
-    st.write("**Tap to Speak:**")
+# --- INPUT SECTION (3 MODES) ---
+tab1, tab2, tab3 = st.tabs(["📸 Camera (Photo)", "🎤 Voice (Audio)", "✍ Text (Type)"])
+
+image_input = None
+audio_input = None
+text_input = None
+
+with tab1:
+    st.write("Take a photo of the affected crop:")
+    camera_file = st.camera_input("Open Camera")
+    if camera_file:
+        image_input = Image.open(camera_file)
+        st.success("Photo captured!")
+
+with tab2:
+    st.write("Tap to Speak (Sambalpuri/Odia):")
     audio = mic_recorder(start_prompt="🎤 Record", stop_prompt="⏹ Stop", key='recorder', format="wav")
+    if audio:
+        audio_input = audio
 
-user_text = st.text_area("Or type here:", placeholder="e.g., Matiagundhi lagiche")
+with tab3:
+    text_input = st.text_area("Type symptoms here:", placeholder="e.g., Patra haldia padu chhe")
 
 # --- LOGIC ENGINE ---
 if st.button("🔍 Diagnose"):
@@ -44,59 +61,58 @@ if st.button("🔍 Diagnose"):
         
     genai.configure(api_key=api_key)
 
-    # --- 1. DEFINE THE BRAIN (System Instruction) ---
-    # This acts as the "Subconscious" of the AI. It cannot be overridden easily.
-    # Note: We put the JSON Database HERE, so it's always available.
+    # --- 1. SYSTEM INSTRUCTION (The Brain) ---
     sys_instruction = f"""
-    You are an expert agricultural AI for Bargarh, Odisha.
-    You understand Sambalpuri/Odia audio and text.
+    Role: Agricultural Expert for Bargarh, Odisha.
+    Capabilities: You can analyze Images, Audio (Sambalpuri), and Text.
     
-    YOUR KNOWLEDGE BASE (JSON):
-    {json.dumps(knowledge_base)}
+    Database: {json.dumps(knowledge_base)}
     
-    STRICT RULES:
-    1. If the input is in Sambalpuri, translate it internally.
-    2. Match symptoms ONLY from the provided JSON Knowledge Base.
+    Rules:
+    1. If an IMAGE is provided, analyze visual symptoms (spots, color, pests).
+    2. Map symptoms to the Database.
     3. OUTPUT MUST BE IN ODIA SCRIPT (Sambalpuri Style).
-    4. Structure the answer exactly like this:
-       - 🛑 Roga: [Name]
-       - 💊 Aushadh: [Chemical]
-       - 💧 Matra: [Dosage]
-    5. If the disease is not in the JSON, say "I don't know" in Sambalpuri.
+    4. Format:
+       - 🛑 Roga (Disease Name)
+       - 💊 Aushadh (Medicine Name)
+       - 💧 Matra (Dosage)
     """
 
-    # --- 2. INITIALIZE MODEL ---
-    # We load the instruction ONCE when creating the model object
     model = genai.GenerativeModel(
         'gemini-2.0-flash',
         system_instruction=sys_instruction
     )
 
-    # --- 3. PREPARE USER INPUT ---
-    # Now we only send the user's specific question, not the whole prompt again
+    # --- 2. PREPARE INPUTS ---
     inputs_to_send = []
     
-    if audio:
+    # We append whatever the user provided. Gemini handles mixed inputs!
+    if image_input:
+        st.info("👁 Photo dekhuchhe... (Analyzing Photo...)")
+        inputs_to_send.append(image_input)
+        inputs_to_send.append("Look at this crop. What disease is this based on my database?")
+    
+    if audio_input:
         st.info("🎧 Sunuchhe... (Listening...)")
-        inputs_to_send.append({"mime_type": "audio/wav", "data": audio['bytes']})
-    elif user_text:
-        st.info("📝 Padhuchhe... (Reading...)")
-        inputs_to_send.append(user_text)
-    else:
-        st.warning("⚠ Please speak or type something!")
+        inputs_to_send.append({"mime_type": "audio/wav", "data": audio_input['bytes']})
+        
+    if text_input:
+        inputs_to_send.append(text_input)
+
+    if not inputs_to_send:
+        st.warning("⚠ Please provide a Photo, Audio, or Text!")
         st.stop()
 
-    # --- 4. GET RESPONSE ---
+    # --- 3. GET RESPONSE ---
     try:
         with st.spinner("🤖 Bhabuchhe... (Thinking...)"):
             response = model.generate_content(inputs_to_send)
             ai_text_odia = response.text
             
-            # Display Text
             st.markdown(f"### 📢 Uttar (Answer):")
             st.markdown(ai_text_odia)
             
-            # Generate Audio (Hindi engine for Indian accent)
+            # Audio Output
             tts = gTTS(text=ai_text_odia, lang='hi')
             sound_file = io.BytesIO()
             tts.write_to_fp(sound_file)
