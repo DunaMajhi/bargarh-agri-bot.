@@ -43,31 +43,34 @@ if st.button("🔍 Diagnose"):
         st.stop()
         
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-2.0-flash')
 
-    # Prepare Input
-    inputs_to_send = []
-    
-    # 1. SYSTEM PROMPT (THE CRITICAL CHANGE)
-    # We force the AI to reply in Odia/Sambalpuri Script
-    system_prompt = f"""
+    # --- 1. SYSTEM INSTRUCTION (The New, Smarter Way) ---
+    # We define the personality here, separate from the user input.
+    sys_instruction = f"""
     Role: Agricultural Expert for Bargarh, Odisha.
-    You speak Sambalpuri/Odia.
+    You understand Sambalpuri/Odia audio and text.
     
     Database: {json.dumps(knowledge_base)}
     
-    Task: 
-    1. Analyze the input (Audio or Text).
-    2. Identify the disease from the database.
-    3. **OUTPUT MUST BE IN ODIA SCRIPT (Sambalpuri Style).** 4. Structure the answer like this:
+    Rules:
+    1. If input is Sambalpuri, translate internally.
+    2. OUTPUT MUST BE IN ODIA SCRIPT (Sambalpuri Style).
+    3. Format the answer:
        - 🛑 Roga (Disease Name)
        - 💊 Aushadh (Medicine Name)
        - 💧 Matra (Dosage)
-    5. Keep it simple and direct for a farmer.
+    4. Keep it simple and direct.
     """
-    inputs_to_send.append(system_prompt)
 
-    # 2. Add User Content
+    # Initialize the model with the instruction locked in
+    model = genai.GenerativeModel(
+        'gemini-2.0-flash',
+        system_instruction=sys_instruction
+    )
+
+    # --- 2. PREPARE USER INPUT ---
+    inputs_to_send = []
+    
     if audio:
         st.info("🎧 Sunuchhe... (Listening...)")
         inputs_to_send.append({"mime_type": "audio/wav", "data": audio['bytes']})
@@ -78,26 +81,20 @@ if st.button("🔍 Diagnose"):
         st.warning("⚠️ Please speak or type something!")
         st.stop()
 
-    # 3. Get Response & Speak It
+    # --- 3. GET RESPONSE ---
     try:
         with st.spinner("🤖 Bhabuchhe... (Thinking...)"):
-            # A. Generate Text
             response = model.generate_content(inputs_to_send)
             ai_text_odia = response.text
             
-            # Display the Text (Odia Script)
+            # Display Text
             st.markdown(f"### 📢 Uttar (Answer):")
             st.markdown(ai_text_odia)
             
-            # B. Generate Audio (Text-to-Speech)
-            # We use 'or' (Odia) for the accent
+            # Generate Audio (Using Hindi engine for Indian accent)
             tts = gTTS(text=ai_text_odia, lang='hi')
-            
-            # Save to memory (not disk) to play instantly
             sound_file = io.BytesIO()
             tts.write_to_fp(sound_file)
-            
-            # Show the Audio Player
             st.audio(sound_file, format='audio/mp3', start_time=0)
             
     except Exception as e:
