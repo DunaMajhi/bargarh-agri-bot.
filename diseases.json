@@ -2,108 +2,90 @@
   {
     "id": "rice_001",
     "name_english": "Yellow Stem Borer",
-    "name_scientific": "Scirpophaga incertulas",
-    "name_local_sambalpuri": "Gendi Poka",
+    "name_local_sambalpuri": "Gendi Poka / Majhi Poka",
     "symptoms_keywords": [
-      "dead heart",
-      "white ear",
-      "drying central shoot",
-      "hole in stem"
+      "dead heart", "white ear", "white head", "drying central shoot",
+      "gendi poka", "majhi poka", "gachha mori jaushi", "dhala sisa",
+      "majhi patra sukhi gala", "kenda dhala", "stem borer"
     ],
-    "treatment_chemical": [
-      {
-        "chemical_name": "Chlorantraniliprole 0.4% GR",
-        "brand_examples": [
-          "Ferterra",
-          "Virtako"
-        ],
-        "dosage": "4 kg per acre"
-      }
-    ]
+    "treatment": {
+      "chemical": "Chlorantraniliprole 0.4% GR",
+      "brand": "Ferterra / Virtako",
+      "dosage": "4 kg per acre"
+    }
   },
   {
     "id": "rice_002",
-    "name_english": "Brown Plant Hopper",
-    "name_scientific": "Nilaparvata lugens",
-    "name_local_sambalpuri": "Matiagundhi",
+    "name_english": "Brown Plant Hopper (BPH)",
+    "name_local_sambalpuri": "Matiagundhi / Chakada Poka",
     "symptoms_keywords": [
-      "hopper burn",
-      "sudden drying of tillers",
-      "browning"
+      "hopper burn", "drying of tillers", "browning", "matiagundhi",
+      "chakada", "gachha jali gala", "mularu sukhi", "brown insect",
+      "telei poka", "mosquito like insect"
     ],
-    "treatment_chemical": [
-      {
-        "chemical_name": "Imidacloprid 17.8% SL",
-        "brand_examples": [
-          "Confidor",
-          "Imida"
-        ],
-        "dosage": "100 ml per acre"
-      }
-    ]
+    "treatment": {
+      "chemical": "Imidacloprid 17.8% SL",
+      "brand": "Confidor / Imida",
+      "dosage": "100 ml per acre"
+    }
   },
   {
     "id": "rice_003",
     "name_english": "Rice Blast",
-    "name_scientific": "Magnaporthe oryzae",
-    "name_local_sambalpuri": "Marua Rog",
+    "name_local_sambalpuri": "Marua Rog / Jhola Rog",
     "symptoms_keywords": [
-      "spindle shaped spots",
-      "grey center spots",
-      "burnt appearance",
-      "neck rot"
+      "spindle spots", "grey center", "burnt appearance", "neck rot",
+      "marua rog", "jhola rog", "patra pura nali", "eye shaped spot",
+      "akhia dag", "benki pacha", "kenda bhangi jaushi"
     ],
-    "treatment_chemical": [
-      {
-        "chemical_name": "Tricyclazole 75% WP",
-        "brand_examples": [
-          "Baan",
-          "Sivic"
-        ],
-        "dosage": "120g per acre"
-      }
-    ]
+    "treatment": {
+      "chemical": "Tricyclazole 75% WP",
+      "brand": "Baan / Sivic",
+      "dosage": "120g per acre"
+    }
   },
   {
     "id": "rice_004",
     "name_english": "Sheath Blight",
-    "name_scientific": "Rhizoctonia solani",
     "name_local_sambalpuri": "Khol Poda / Patra Poda",
     "symptoms_keywords": [
-      "snake skin pattern",
-      "irregular spots on sheath",
-      "drying of leaves"
+      "snake skin pattern", "irregular spots", "sheath rotting",
+      "khol poda", "patra poda", "gachha tale dag", "pacha rog",
+      "snake skin", "sap kaanti"
     ],
-    "treatment_chemical": [
-      {
-        "chemical_name": "Hexaconazole 5% SC",
-        "brand_examples": [
-          "Contaf",
-          "Sitara"
-        ],
-        "dosage": "400ml per acre"
-      }
-    ]
+    "treatment": {
+      "chemical": "Hexaconazole 5% SC",
+      "brand": "Contaf / Sitara",
+      "dosage": "400ml per acre"
+    }
   },
   {
     "id": "rice_005",
     "name_english": "Gundhi Bug",
-    "name_scientific": "Leptocorisa acuta",
     "name_local_sambalpuri": "Gundhi Kira",
     "symptoms_keywords": [
-      "bad smell",
-      "empty grains",
-      "chaffy grains"
+      "bad smell", "empty grains", "chaffy grains", "gundhi kira",
+      "gandhauche", "dhan fopa heigala", "khira chusuche",
+      "bug smell", "agada"
     ],
-    "treatment_chemical": [
-      {
-        "chemical_name": "Malathion 5% Dust",
-        "brand_examples": [
-          "Cythion",
-          "Malathion 50"
-        ],
-        "dosage": "10kg per acre (Dusting)"
-      }
-    ]
+    "treatment": {
+      "chemical": "Malathion 5% Dust",
+      "brand": "Cythion / Malathion 50",
+      "dosage": "10kg per acre (Dusting)"
+    }
+  },
+  {
+    "id": "rice_006",
+    "name_english": "Leaf Folder",
+    "name_local_sambalpuri": "Patra Moda / Patra Gundi",
+    "symptoms_keywords": [
+      "folded leaf", "white streaks", "leaf rolling", "patra moda",
+      "patra gundi", "patra bhangi", "dhala dhala dag", "leaf roller"
+    ],
+    "treatment": {
+      "chemical": "Cartap Hydrochloride 50% SP",
+      "brand": "Padan / Kritap",
+      "dosage": "400g per acre"
+    }
   }
 ]
