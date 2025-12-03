@@ -31,13 +31,24 @@ st.markdown("###  Dekhun, Sunun au Bujhun")
 st.caption("See, Listen, and Understand")
 
 # --- INPUT SECTION (3 MODES) ---
-tab1, tab2, tab3 = st.tabs(["📸 Photo (Camera/Upload)", "🎤 Voice (Audio)", "✍ Text (Type)"])
+tab1, tab2, tab3 = st.tabs(["✍ Text (Type)", "🎤 Voice (Audio)", "📸 Photo (Camera/Upload)"])
 
-image_input = None
-audio_input = None
 text_input = None
+audio_input = None
+image_input = None
+
 
 with tab1:
+    text_input = st.text_area("Type symptoms here:", placeholder="e.g., Patra haldia padu chhe")
+
+with tab2:
+    st.write("Tap to Speak (Sambalpuri/Odia):")
+    audio = mic_recorder(start_prompt="🎤 Record", stop_prompt="⏹ Stop", key='recorder', format="wav")
+    if audio:
+        audio_input = audio
+
+
+with tab3:
     st.write("### Option 1: Take a Photo")
     camera_file = st.camera_input("Open Camera")
     
@@ -52,14 +63,6 @@ with tab1:
         image_input = Image.open(upload_file)
         st.success("📂 Photo loaded from Gallery!")
 
-with tab2:
-    st.write("Tap to Speak (Sambalpuri/Odia):")
-    audio = mic_recorder(start_prompt="🎤 Record", stop_prompt="⏹ Stop", key='recorder', format="wav")
-    if audio:
-        audio_input = audio
-
-with tab3:
-    text_input = st.text_area("Type symptoms here:", placeholder="e.g., Patra haldia padu chhe")
 
 # --- LOGIC ENGINE ---
 if st.button("🔍 Diagnose"):
