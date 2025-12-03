@@ -133,11 +133,20 @@ if st.button("🔍 Diagnose"):
             response = model.generate_content(inputs_to_send)
             ai_text_odia = response.text
             
+            # Display formatted text (with Markdown) for reading
             st.markdown(f"### Uttar (Answer):")
             st.markdown(ai_text_odia)
             
-            # Audio Output
-            tts = gTTS(text=ai_text_odia, lang='hi')
+            # --- CLEAN TEXT FOR AUDIO (Remove #, *, etc.) ---
+            def clean_text_for_speech(text):
+                # Remove Markdown symbols but keep the words
+                clean = text.replace("*", "").replace("#", "").replace("- ", "")
+                return clean
+
+            speech_text = clean_text_for_speech(ai_text_odia)
+            
+            # Generate Audio from CLEAN text
+            tts = gTTS(text=speech_text, lang='hi') # 'hi' accent works best
             sound_file = io.BytesIO()
             tts.write_to_fp(sound_file)
             st.audio(sound_file, format='audio/mp3', start_time=0)
