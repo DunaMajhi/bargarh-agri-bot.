@@ -7,7 +7,7 @@ import io
 from PIL import Image
 
 # --- PAGE CONFIGURATION ---
-st.set_page_config(page_title="Bargarh Krishi Sahayak", page_icon="🌾")
+st.set_page_config(page_title="Chaasi Sahayak", page_icon="🌾")
 
 # --- LOAD DATA ---
 @st.cache_data
@@ -26,7 +26,7 @@ with st.sidebar:
         api_key = st.text_input("Enter Google API Key", type="password")
 
 # --- MAIN INTERFACE ---
-st.title("🌾 Bargarh Krishi Sahayak")
+st.title("🌾 Chasi Sahayak")
 st.markdown("###  Dekhun, Sunun au Bujhun")
 st.caption("See, Listen, and Understand")
 
@@ -69,23 +69,34 @@ if st.button("🔍 Diagnose"):
         
     genai.configure(api_key=api_key)
 
-    # --- 1. SYSTEM INSTRUCTION (The Brain) ---
+    # --- 1. SYSTEM INSTRUCTION (STRICT MODE) ---
     sys_instruction = f"""
-    Role: Agricultural Expert for Bargarh, Odisha.
-    Capabilities: You can analyze Images, Audio (Sambalpuri), and Text.
+    Role: You are an expert Agricultural AI for Bargarh, Odisha.
+    Knowledge Base: {json.dumps(knowledge_base)}
     
-    Database: {json.dumps(knowledge_base)}
+    CRITICAL INSTRUCTION - LANGUAGE:
+    1. You MUST reply in ODIA SCRIPT (Sambalpuri style).
+    2. DO NOT reply in Hindi, Bengali, or English text.
+    3. Even if the user speaks English, you reply in Odia Script.
     
-    Rules:
-    1. If an IMAGE is provided, analyze visual symptoms (spots, color, pests).
-    2. Map symptoms to the Database.
-    3. OUTPUT MUST BE IN ODIA SCRIPT (Sambalpuri Style).
-    4. Structure the answer like this:
-       - 🛑 Roga (Disease Name)
-       - 💊 Aushadh (Medicine Name)
-       - 💧 Matra (Dosage)
+    CRITICAL INSTRUCTION - LOGIC:
+    1. Look for keywords in the user's input (audio/text) that match the 'symptoms_keywords' in the Knowledge Base.
+    2. Even partial matches (e.g., "Nali" -> "Marua Rog") are okay.
+    3. If the user says a local term like "Gendi" or "Matiagundhi", map it immediately.
+    
+    OUTPUT FORMAT (Strictly maintain this):
+    
+    ### 🛑 ରୋଗ (Disease):
+    [Name in Odia] ([Local Name])
+    
+    ### 📝 କାରଣ (Reason):
+    [One line explanation in Odia]
+    
+    ### 💊 ଔଷଧ (Medicine):
+    * *Chemical:* [Chemical Name in English/Odia]
+    * *Brand:* [Brand Name]
+    * *Matra:* [Dosage in Odia]
     """
-
     model = genai.GenerativeModel(
         'gemini-2.0-flash',
         system_instruction=sys_instruction
