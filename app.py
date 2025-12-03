@@ -115,10 +115,12 @@ if st.button("🔍 Diagnose / Send", type="primary"):
     ### 🌍 Research/Video Note: [If you used Search, mention the source/link here in simple Odia]
     """
     
-    # --- 2. MODEL INITIALIZATION WITH TOOLS (THE FIX) ---
-    # We use a list of dictionaries to enable the tool properly
+    # --- 2. MODEL INITIALIZATION (THE BULLETPROOF FIX) ---
+    # We create the Tool object directly using protos to avoid dictionary parsing errors
     tools = [
-        {"google_search": {}}
+        genai.protos.Tool(
+            google_search=genai.protos.GoogleSearch()
+        )
     ]
 
     model = genai.GenerativeModel(
@@ -127,7 +129,7 @@ if st.button("🔍 Diagnose / Send", type="primary"):
         tools=tools 
     )
     
-    # We must enable "automatic_function_calling" logic implicitly by just starting the chat
+    # Start Chat (Automatic Function Calling is enabled by default with tools)
     chat = model.start_chat(history=[])
     
     inputs_to_send = []
@@ -151,10 +153,13 @@ if st.button("🔍 Diagnose / Send", type="primary"):
             st.markdown("### 📢 Result:")
             st.markdown(ai_text)
             
-            # Show "Grounding Source" (Evidence) if available
-            # Note: The structure of grounding metadata can vary, keeping it simple for display
-            if hasattr(response.candidates[0], 'grounding_metadata') and response.candidates[0].grounding_metadata.search_entry_point:
-                 st.caption("🔎 Internet Sources Used (Verified via Google Search)")
+            # Show "Grounding Source" if available (The Search Proof)
+            try:
+                # Check if search was actually used
+                if response.candidates[0].grounding_metadata.search_entry_point:
+                     st.caption("🔎 Internet Sources Used (Verified via Google Search)")
+            except:
+                pass
 
             # Clean Text for Audio
             clean_text = ai_text.replace("*", "").replace("#", "").replace("http", "")
@@ -168,4 +173,3 @@ if st.button("🔍 Diagnose / Send", type="primary"):
             
         except Exception as e:
             st.error(f"Error: {e}")
-
