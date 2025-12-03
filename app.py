@@ -95,46 +95,39 @@ if st.button("🔍 Diagnose / Send", type="primary"):
 
     genai.configure(api_key=api_key)
 
-    # --- 1. THE SUPER-DOCTOR BRAIN ---
+    # --- 1. THE BRAIN (Standard Mode) ---
     sys_instruction = f"""
     Role: Expert Agricultural AI (Chaasi Sahayak) for Bargarh.
     
     YOUR RESOURCES:
     1. *Primary:* Local Knowledge Base (JSON): {json.dumps(knowledge_base)}
-    2. *Secondary:* GOOGLE SEARCH (Use this for new diseases, research papers, or weather).
     
     STRICT RULES:
-    1. *Language:* ALWAYS reply in *ODIA SCRIPT (Sambalpuri)*. Translate any search results into simple Sambalpuri.
-    2. *Research Mode:* If the user asks about a disease NOT in your JSON, or asks for "Latest Research" or "YouTube Video", USE GOOGLE SEARCH.
-    3. *Video Links:* If you find a solution via Search, try to provide a YouTube link if available.
+    1. *Language:* ALWAYS reply in *ODIA SCRIPT (Sambalpuri)*.
+    2. *Logic:* Match symptoms from user input to the JSON.
+    3. *Unknowns:* If the disease is not in the JSON, admit you don't know. Do not hallucinate.
     
     DIAGNOSIS FORMAT:
     ### 🛑 ରୋଗ (Disease): ...
     ### 📝 କାରଣ (Reason): ...
     ### 💊 ଔଷଧ (Medicine): ...
-    ### 🌍 Research/Video Note: [If you used Search, mention the source/link here in simple Odia]
     """
     
-    # --- 2. INITIALIZE MODEL WITH SEARCH TOOL ---
-    # This is the correct dictionary syntax for the new library
-    tools = [
-        {"google_search": {}}
-    ]
-
+    # --- 2. MODEL INITIALIZATION (SAFE MODE - NO TOOLS) ---
+    # We disabled tools to prevent the Streamlit crash.
     model = genai.GenerativeModel(
         'gemini-2.0-flash',
-        system_instruction=sys_instruction,
-        tools=tools 
+        system_instruction=sys_instruction
+        # tools=[{'google_search': {}}] <--- DISABLED FOR STABILITY
     )
     
-    # Start Chat (Automatic Function Calling is active)
     chat = model.start_chat(history=[])
     
     inputs_to_send = []
     
     if image_input:
         inputs_to_send.append(image_input)
-        inputs_to_send.append("Diagnose this crop. If unsure, search Google for visual matches.")
+        inputs_to_send.append("Diagnose this crop based on the provided JSON database.")
     
     if isinstance(user_input, dict): 
         inputs_to_send.append(user_input)
@@ -142,7 +135,7 @@ if st.button("🔍 Diagnose / Send", type="primary"):
         inputs_to_send.append(user_input)
 
     # --- 3. GET RESPONSE ---
-    with st.spinner("🤖 Bhabuchhe... (Checking Database & Internet...)"):
+    with st.spinner("🤖 Bhabuchhe... (Checking Database...)"):
         try:
             response = chat.send_message(inputs_to_send)
             ai_text = response.text
@@ -151,13 +144,6 @@ if st.button("🔍 Diagnose / Send", type="primary"):
             st.markdown("### 📢 Result:")
             st.markdown(ai_text)
             
-            # Show "Grounding Source" (Evidence) if available
-            try:
-                if response.candidates[0].grounding_metadata.search_entry_point:
-                     st.caption("🔎 Internet Sources Used (Verified via Google Search)")
-            except:
-                pass
-
             # Clean Text for Audio
             clean_text = ai_text.replace("*", "").replace("#", "").replace("http", "")
             tts = gTTS(text=clean_text, lang='hi')
