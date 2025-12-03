@@ -115,12 +115,10 @@ if st.button("🔍 Diagnose / Send", type="primary"):
     ### 🌍 Research/Video Note: [If you used Search, mention the source/link here in simple Odia]
     """
     
-    # --- 2. MODEL INITIALIZATION (THE BULLETPROOF FIX) ---
-    # We create the Tool object directly using protos to avoid dictionary parsing errors
+    # --- 2. INITIALIZE MODEL WITH SEARCH TOOL ---
+    # This is the correct dictionary syntax for the new library
     tools = [
-        genai.protos.Tool(
-            google_search=genai.protos.GoogleSearch()
-        )
+        {"google_search": {}}
     ]
 
     model = genai.GenerativeModel(
@@ -129,7 +127,7 @@ if st.button("🔍 Diagnose / Send", type="primary"):
         tools=tools 
     )
     
-    # Start Chat (Automatic Function Calling is enabled by default with tools)
+    # Start Chat (Automatic Function Calling is active)
     chat = model.start_chat(history=[])
     
     inputs_to_send = []
@@ -153,9 +151,8 @@ if st.button("🔍 Diagnose / Send", type="primary"):
             st.markdown("### 📢 Result:")
             st.markdown(ai_text)
             
-            # Show "Grounding Source" if available (The Search Proof)
+            # Show "Grounding Source" (Evidence) if available
             try:
-                # Check if search was actually used
                 if response.candidates[0].grounding_metadata.search_entry_point:
                      st.caption("🔎 Internet Sources Used (Verified via Google Search)")
             except:
