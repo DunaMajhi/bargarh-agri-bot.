@@ -32,7 +32,7 @@ with st.sidebar:
     st.divider()
     
     # --- HISTORY SECTION ---
-    st.subheader("📜 Puruna Katha (History)")
+    st.subheader("📜 Puruna Katha ")
     
     # Create a scrollable container for history
     history_container = st.container(height=400)
@@ -107,8 +107,8 @@ if st.button("🔍 Diagnose / Send", type="primary"):
     1. Reply in ODIA SCRIPT (Sambalpuri).
     2. NEVER use English/Hindi script in output.
     3. DIAGNOSIS FORMAT:
-       ### 🛑 ରୋଗ (Disease): ...
-       ### 💊 ଔଷଧ (Medicine): ...
+       ###  ରୋଗ (Disease): ...
+       ###  ଔଷଧ (Medicine): ...
     """
     
     model = genai.GenerativeModel('gemini-2.0-flash', system_instruction=sys_instruction)
@@ -132,7 +132,7 @@ if st.button("🔍 Diagnose / Send", type="primary"):
             ai_text = response.text
             
             # Display Result in Main Area (Big & Bold)
-            st.markdown("### 📢 Result:")
+            st.markdown("### Result:")
             st.markdown(ai_text)
             
             # Clean text for Audio
