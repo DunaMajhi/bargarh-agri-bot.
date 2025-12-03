@@ -92,13 +92,13 @@ if st.button("🔍 Diagnose"):
     
     FINAL OUTPUT FORMAT (If Diagnosis Found):
     
-    ### 🛑 ରୋଗ (Disease):
+    ### ରୋଗ (Disease):
     [Name in Odia] ([Local Name])
     
-    ### 📝 କାରଣ (Reason):
+    ### କାରଣ (Reason):
     [One line explanation in Odia based on the symptom matched]
     
-    ### 💊 ଔଷଧ (Medicine):
+    ### ଔଷଧ (Medicine):
     * *Chemical:* [Chemical Name from JSON]
     * *Brand:* [Brand Name from JSON]
     * *Matra:* [Dosage from JSON]
@@ -133,7 +133,7 @@ if st.button("🔍 Diagnose"):
             response = model.generate_content(inputs_to_send)
             ai_text_odia = response.text
             
-            st.markdown(f"### 📢 Uttar (Answer):")
+            st.markdown(f"### Uttar (Answer):")
             st.markdown(ai_text_odia)
             
             # Audio Output
