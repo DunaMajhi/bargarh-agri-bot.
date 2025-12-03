@@ -115,14 +115,19 @@ if st.button("🔍 Diagnose / Send", type="primary"):
     ### 🌍 Research/Video Note: [If you used Search, mention the source/link here in simple Odia]
     """
     
-    # --- 2. MODEL INITIALIZATION WITH TOOLS ---
-    # We add 'tools' here to enable Internet Access
+    # --- 2. MODEL INITIALIZATION WITH TOOLS (THE FIX) ---
+    # We use a list of dictionaries to enable the tool properly
+    tools = [
+        {"google_search": {}}
+    ]
+
     model = genai.GenerativeModel(
         'gemini-2.0-flash',
         system_instruction=sys_instruction,
-        tools='google_search_retrieval' # <--- THE MAGIC LINE
+        tools=tools 
     )
     
+    # We must enable "automatic_function_calling" logic implicitly by just starting the chat
     chat = model.start_chat(history=[])
     
     inputs_to_send = []
@@ -139,7 +144,6 @@ if st.button("🔍 Diagnose / Send", type="primary"):
     # --- 3. GET RESPONSE ---
     with st.spinner("🤖 Bhabuchhe... (Checking Database & Internet...)"):
         try:
-            # We don't use stream=True for tools usually to wait for full reasoning
             response = chat.send_message(inputs_to_send)
             ai_text = response.text
             
@@ -148,7 +152,8 @@ if st.button("🔍 Diagnose / Send", type="primary"):
             st.markdown(ai_text)
             
             # Show "Grounding Source" (Evidence) if available
-            if response.candidates[0].grounding_metadata.search_entry_point:
+            # Note: The structure of grounding metadata can vary, keeping it simple for display
+            if hasattr(response.candidates[0], 'grounding_metadata') and response.candidates[0].grounding_metadata.search_entry_point:
                  st.caption("🔎 Internet Sources Used (Verified via Google Search)")
 
             # Clean Text for Audio
@@ -163,3 +168,4 @@ if st.button("🔍 Diagnose / Send", type="primary"):
             
         except Exception as e:
             st.error(f"Error: {e}")
+
