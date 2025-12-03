@@ -17,6 +17,10 @@ def load_data():
 
 knowledge_base = load_data()
 
+# --- INIT CHAT HISTORY ---
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+
 # --- SIDEBAR ---
 with st.sidebar:
     st.header("🔑 Activation")
@@ -24,132 +28,106 @@ with st.sidebar:
         api_key = st.secrets["GOOGLE_API_KEY"]
     else:
         api_key = st.text_input("Enter Google API Key", type="password")
+    
+    # Clear History Button
+    if st.button("🗑 Clear Conversation"):
+        st.session_state.chat_history = []
+        st.rerun()
 
 # --- MAIN INTERFACE ---
-st.title("🌾 Chasi Sahayak")
-#st.markdown("###  Dekhun, Sunun au Bujhun")
+st.title("🌾 Chaasi Sahayak")
 st.caption("See, Listen, and Understand")
 
-# --- INPUT SECTION (3 MODES) ---
-tab1, tab2, tab3 = st.tabs(["✍ Text (Type)", "🎤 Voice (Audio)", "📸 Photo (Camera/Upload)"])
+# --- DISPLAY CHAT HISTORY ---
+for message in st.session_state.chat_history:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
 
-text_input = None
-audio_input = None
-image_input = None
+# --- INPUT SECTION ---
+# We use a container to keep inputs stable
+with st.container():
+    tab1, tab2, tab3 = st.tabs(["✍ Text", "🎤 Voice", "📸 Photo"])
 
+    user_input = None
+    image_input = None
 
-with tab1:
-    text_input = st.text_area("Type symptoms here:", placeholder="e.g., Patra haldia padu chhe")
+    with tab1:
+        text_val = st.text_input("Type symptoms:", key="txt_input")
+        if text_val: user_input = text_val
 
-with tab2:
-    st.write("Tap to Speak (Sambalpuri/Odia):")
-    audio = mic_recorder(start_prompt="🎤 Record", stop_prompt="⏹ Stop", key='recorder', format="wav")
-    if audio:
-        audio_input = audio
+    with tab2:
+        st.write("Tap to Speak:")
+        audio = mic_recorder(start_prompt="🎤 Record", stop_prompt="⏹ Stop", key='recorder', format="wav")
+        if audio:
+            user_input = {"mime_type": "audio/wav", "data": audio['bytes']}
 
-
-with tab3:
-    st.write("### Option 1: Take a Photo")
-    camera_file = st.camera_input("Open Camera")
-    
-    st.write("### Option 2: Upload from Gallery")
-    upload_file = st.file_uploader("Choose an image...", type=['jpg', 'jpeg', 'png'])
-
-    # Logic: Prioritize Camera, then Upload
-    if camera_file:
-        image_input = Image.open(camera_file)
-        st.success("📸 Photo captured from Camera!")
-    elif upload_file:
-        image_input = Image.open(upload_file)
-        st.success("📂 Photo loaded from Gallery!")
-
+    with tab3:
+        cam = st.camera_input("Camera")
+        up = st.file_uploader("Upload", type=['jpg','png'])
+        if cam: image_input = Image.open(cam)
+        elif up: image_input = Image.open(up)
 
 # --- LOGIC ENGINE ---
-if st.button("🔍 Diagnose"):
+if st.button("🔍 Diagnose / Send"):
     if not api_key:
         st.error("⚠ API Key missing.")
         st.stop()
         
-    genai.configure(api_key=api_key)
-
-   # --- SYSTEM INSTRUCTION (ADVANCED) ---
-    sys_instruction = f"""
-    Role: You are an expert Agricultural AI for Bargarh, Odisha (Chaasi Sahayak).
-    Knowledge Base: {json.dumps(knowledge_base)}
-    
-    STRICT LANGUAGE RULES:
-    1. ALWAYS Output in *Odia Script* (Sambalpuri dialect).
-    2. NEVER use English or Hindi script in the final output.
-    
-    DIAGNOSIS LOGIC:
-    1. Scan the user input for matching keywords from the 'symptoms_keywords' list in the JSON.
-    2. *Direct Match:* If you find a clear match (e.g., "Matiagundhi", "Patra poda"), output the Diagnosis immediately.
-    3. *Vague Input:* If the user just says "My plant is dying" or "It looks bad" WITHOUT specific symptoms:
-       - DO NOT GUESS.
-       - Instead, ask a clarifying question in Sambalpuri:
-       - "Gachha re kanta/dag achhe ki?" (Are there spots?)
-       - "Kenda dhala padiche ki?" (Is the ear white?)
-    
-    FINAL OUTPUT FORMAT (If Diagnosis Found):
-    
-    ### ରୋଗ (Disease):
-    [Name in Odia] ([Local Name])
-    
-    ### କାରଣ (Reason):
-    [One line explanation in Odia based on the symptom matched]
-    
-    ### ଔଷଧ (Medicine):
-    * *Chemical:* [Chemical Name from JSON]
-    * *Brand:* [Brand Name from JSON]
-    * *Matra:* [Dosage from JSON]
-    """
-    model = genai.GenerativeModel(
-        'gemini-2.0-flash',
-        system_instruction=sys_instruction
-    )
-
-    # --- 2. PREPARE INPUTS ---
-    inputs_to_send = []
-    
-    if image_input:
-        st.info("👁 Photo dekhuchhe... (Analyzing Photo...)")
-        inputs_to_send.append(image_input)
-        inputs_to_send.append("Look at this crop. What disease is this based on my database?")
-    
-    if audio_input:
-        st.info("🎧 Sunuchhe... (Listening...)")
-        inputs_to_send.append({"mime_type": "audio/wav", "data": audio_input['bytes']})
-        
-    if text_input:
-        inputs_to_send.append(text_input)
-
-    if not inputs_to_send:
-        st.warning("⚠ Please provide a Photo, Audio, or Text!")
+    if not user_input and not image_input:
+        st.warning("⚠ Please provide input!")
         st.stop()
 
-    # --- 3. GET RESPONSE ---
-    try:
-        with st.spinner("🤖 Bhabuchhe... (Thinking...)"):
-            response = model.generate_content(inputs_to_send)
-            ai_text_odia = response.text
-            
-            # Display formatted text (with Markdown) for reading
-            st.markdown(f"### Uttar (Answer):")
-            st.markdown(ai_text_odia)
-            
-            # --- CLEAN TEXT FOR AUDIO (Remove #, *, etc.) ---
-            def clean_text_for_speech(text):
-                # Remove Markdown symbols but keep the words
-                clean = text.replace("*", "").replace("#", "").replace("- ", "")
-                return clean
+    # Add User Input to History (Visual only for now)
+    st.session_state.chat_history.append({"role": "user", "content": "Analyze this input..."})
 
-            speech_text = clean_text_for_speech(ai_text_odia)
+    genai.configure(api_key=api_key)
+
+    # --- 1. SYSTEM INSTRUCTION (STRICT MODE) ---
+    sys_instruction = f"""
+    Role: Expert Agricultural AI (Chaasi Sahayak) for Bargarh.
+    Knowledge Base: {json.dumps(knowledge_base)}
+    
+    RULES:
+    1. Reply in ODIA SCRIPT (Sambalpuri).
+    2. Use the Chat History to understand context.
+    3. If user asks "What is the price?", assume they mean the medicine from the previous turn.
+    4. DIAGNOSIS FORMAT:
+       ### 🛑 ରୋଗ (Disease): ...
+       ### 💊 ଔଷଧ (Medicine): ...
+    """
+    
+    model = genai.GenerativeModel('gemini-2.0-flash', system_instruction=sys_instruction)
+    
+    # --- 2. BUILD CONVERSATION (The Memory Trick) ---
+    chat = model.start_chat(history=[])
+    
+    # Send Inputs
+    inputs_to_send = []
+    
+    # Add previous context summary if needed (Simple version: just send current input)
+    # Gemini handles short term context in 'start_chat' usually, but here we are stateless between reruns
+    # So we send the current input fresh.
+    
+    if image_input:
+        inputs_to_send.append(image_input)
+        inputs_to_send.append("Look at this crop.")
+    
+    if isinstance(user_input, dict): # Audio
+        inputs_to_send.append(user_input)
+    elif user_input: # Text
+        inputs_to_send.append(user_input)
+
+    # --- 3. GET RESPONSE ---
+    with st.spinner("🤖 Bhabuchhe..."):
+        try:
+            response = chat.send_message(inputs_to_send)
+            ai_text = response.text
             
-            # Generate Audio from CLEAN text
-            tts = gTTS(text=speech_text, lang='hi') # 'hi' accent works best
-            sound_file = io.BytesIO()
-            tts.write_to_fp(sound_file)
-            st.audio(sound_file, format='audio/mp3', start_time=0)
+            # Save AI Response to History
+            st.session_state.chat_history.append({"role": "assistant", "content": ai_text})
             
-    except Exception as e:
-        st.error(f"Error: {e}")
+            # Force Rerun to show new chat
+            st.rerun()
+            
+        except Exception as e:
+            st.error(f"Error: {e}")
