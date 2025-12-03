@@ -27,7 +27,7 @@ with st.sidebar:
 
 # --- MAIN INTERFACE ---
 st.title("🌾 Chasi Sahayak")
-st.markdown("###  Dekhun, Sunun au Bujhun")
+#st.markdown("###  Dekhun, Sunun au Bujhun")
 st.caption("See, Listen, and Understand")
 
 # --- INPUT SECTION (3 MODES) ---
