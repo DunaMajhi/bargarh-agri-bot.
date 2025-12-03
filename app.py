@@ -13,6 +13,7 @@ st.set_page_config(page_title="Chaasi Sahayak", page_icon="🌾", layout="wide")
 @st.cache_data
 def load_data():
     with open('diseases.json', 'r') as f:
+        # Load your local "Textbook"
         return json.load(f)
 
 knowledge_base = load_data()
@@ -32,16 +33,13 @@ with st.sidebar:
     st.divider()
     
     # --- HISTORY SECTION ---
-    st.subheader("📜 Puruna Katha ")
-    
-    # Create a scrollable container for history
+    st.subheader("📜 Purana Katha (History)")
     history_container = st.container(height=400)
     with history_container:
         if not st.session_state.chat_history:
             st.caption("No conversation yet.")
         else:
             for message in st.session_state.chat_history:
-                # Icon: User = Farmer, Assistant = Bot
                 role_icon = "👨‍🌾" if message["role"] == "user" else "🤖"
                 with st.chat_message(message["role"], avatar=role_icon):
                     st.markdown(message["content"])
@@ -53,7 +51,7 @@ with st.sidebar:
 
 # --- MAIN INTERFACE ---
 st.title("🌾 Chaasi Sahayak")
-st.caption("See, Listen, and Understand")
+st.caption("AI Doctor with Research Access (Google Search & Papers)")
 
 # --- INPUT SECTION (Tabs) ---
 tab1, tab2, tab3 = st.tabs(["✍ Text", "🎤 Voice", "📸 Photo"])
@@ -91,52 +89,70 @@ if st.button("🔍 Diagnose / Send", type="primary"):
         st.warning("⚠ Please provide input!")
         st.stop()
 
-    # 1. Add User Input to History (To show in Sidebar)
-    # Note: We summarize images/audio as text for the history display
+    # Add User Input to History
     history_label = "📸 [Sent Photo]" if image_input else "🎤 [Sent Audio]" if isinstance(user_input, dict) else user_input
     st.session_state.chat_history.append({"role": "user", "content": history_label})
 
     genai.configure(api_key=api_key)
 
-    # --- 2. SYSTEM INSTRUCTION (STRICT MODE) ---
+    # --- 1. THE SUPER-DOCTOR BRAIN ---
     sys_instruction = f"""
     Role: Expert Agricultural AI (Chaasi Sahayak) for Bargarh.
-    Knowledge Base: {json.dumps(knowledge_base)}
     
-    RULES:
-    1. Reply in ODIA SCRIPT (Sambalpuri).
-    2. NEVER use English/Hindi script in output.
-    3. DIAGNOSIS FORMAT:
-       ###  ରୋଗ (Disease): ...
-       ###  ଔଷଧ (Medicine): ...
+    YOUR RESOURCES:
+    1. *Primary:* Local Knowledge Base (JSON): {json.dumps(knowledge_base)}
+    2. *Secondary:* GOOGLE SEARCH (Use this for new diseases, research papers, or weather).
+    
+    STRICT RULES:
+    1. *Language:* ALWAYS reply in *ODIA SCRIPT (Sambalpuri)*. Translate any search results into simple Sambalpuri.
+    2. *Research Mode:* If the user asks about a disease NOT in your JSON, or asks for "Latest Research" or "YouTube Video", USE GOOGLE SEARCH.
+    3. *Video Links:* If you find a solution via Search, try to provide a YouTube link if available.
+    
+    DIAGNOSIS FORMAT:
+    ### 🛑 ରୋଗ (Disease): ...
+    ### 📝 କାରଣ (Reason): ...
+    ### 💊 ଔଷଧ (Medicine): ...
+    ### 🌍 Research/Video Note: [If you used Search, mention the source/link here in simple Odia]
     """
     
-    model = genai.GenerativeModel('gemini-2.0-flash', system_instruction=sys_instruction)
+    # --- 2. MODEL INITIALIZATION WITH TOOLS ---
+    # We add 'tools' here to enable Internet Access
+    model = genai.GenerativeModel(
+        'gemini-2.0-flash',
+        system_instruction=sys_instruction,
+        tools='google_search_retrieval' # <--- THE MAGIC LINE
+    )
+    
     chat = model.start_chat(history=[])
     
     inputs_to_send = []
     
     if image_input:
         inputs_to_send.append(image_input)
-        inputs_to_send.append("Diagnose this crop.")
+        inputs_to_send.append("Diagnose this crop. If unsure, search Google for visual matches.")
     
-    if isinstance(user_input, dict): # Audio
+    if isinstance(user_input, dict): 
         inputs_to_send.append(user_input)
-    elif user_input: # Text
+    elif user_input: 
         inputs_to_send.append(user_input)
 
     # --- 3. GET RESPONSE ---
-    with st.spinner("🤖 Bhabuchhe..."):
+    with st.spinner("🤖 Bhabuchhe... (Checking Database & Internet...)"):
         try:
+            # We don't use stream=True for tools usually to wait for full reasoning
             response = chat.send_message(inputs_to_send)
             ai_text = response.text
             
-            # Display Result in Main Area (Big & Bold)
-            st.markdown("### Result:")
+            # Display Result
+            st.markdown("### 📢 Result:")
             st.markdown(ai_text)
             
-            # Clean text for Audio
-            clean_text = ai_text.replace("*", "").replace("#", "")
+            # Show "Grounding Source" (Evidence) if available
+            if response.candidates[0].grounding_metadata.search_entry_point:
+                 st.caption("🔎 Internet Sources Used (Verified via Google Search)")
+
+            # Clean Text for Audio
+            clean_text = ai_text.replace("*", "").replace("#", "").replace("http", "")
             tts = gTTS(text=clean_text, lang='hi')
             sound_file = io.BytesIO()
             tts.write_to_fp(sound_file)
@@ -144,9 +160,6 @@ if st.button("🔍 Diagnose / Send", type="primary"):
 
             # Save to History
             st.session_state.chat_history.append({"role": "assistant", "content": ai_text})
-            
-            # Note: We do NOT rerun here instantly, so the user can read the result on the main screen first.
-            # The history in the sidebar will update on the NEXT interaction.
             
         except Exception as e:
             st.error(f"Error: {e}")
