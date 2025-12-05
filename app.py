@@ -41,7 +41,7 @@ if "chat_history" not in st.session_state:
 
 # --- SIDEBAR ---
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/628/628283.png", width=50) # Free Agri Icon
+    st.image("https://cdn-icons-png.flaticon.com/512/628/628283.png", width=50)
     st.title("Settings")
     
     # 1. LANGUAGE
@@ -52,8 +52,8 @@ with st.sidebar:
     
     st.divider()
     
-    # 2. INTERNET MODE (The Feature You Asked For)
-    use_internet = st.toggle("🌍 Enable Google Search", value=False, help="Turn this on to search the web for new diseases or research.")
+    # 2. INTERNET MODE
+    use_internet = st.toggle("🌍 Enable Google Search", value=False, help="Turn ON to search the web for new diseases.")
     
     st.divider()
     
@@ -62,7 +62,7 @@ with st.sidebar:
     else:
         api_key = st.text_input("Enter Google API Key", type="password")
     
-    # History
+    # History Container
     st.subheader("📜 History")
     with st.container(height=300):
         for message in st.session_state.chat_history:
@@ -132,7 +132,7 @@ if st.button("🔍 Diagnose / Send", type="primary"):
     1. *Language:* Translate your reasoning into *{selected_language}*.
     2. *Script:* Write the output using *{target_script}*.
     3. *Tone:* Rustic, simple, rural. "Village Elder" persona.
-    4. *Formatting:* Use bolding and bullet points for readability.
+    4. *Formatting:* Use bolding and bullet points.
     
     FORMAT:
     ### 🛑 Disease ({selected_language}): ...
@@ -140,8 +140,7 @@ if st.button("🔍 Diagnose / Send", type="primary"):
     ### 💊 Medicine: ...
     """
     
-    # --- DYNAMIC MODEL CONFIG ---
-    # This is the magic. If Toggle is ON, we add tools. If OFF, we don't.
+    # --- DYNAMIC CONFIG ---
     if use_internet:
         tools = [{"google_search": {}}]
         model = genai.GenerativeModel('gemini-2.0-flash', system_instruction=sys_instruction, tools=tools)
@@ -165,15 +164,12 @@ if st.button("🔍 Diagnose / Send", type="primary"):
             response = chat.send_message(inputs_to_send)
             ai_text = response.text
             
-            # --- ANIMATION (Visuals) ---
-            st.balloons() # 🎉 Fun Animation on Success!
-            
-            # Display Result in a Nice Box
+            # Display Result (NO BALLOONS)
             st.success("✅ Diagnosis Complete!")
             st.markdown(f"### 📢 Result:")
             st.markdown(ai_text)
             
-            # Show Search Proof (Visual)
+            # Show Search Proof
             if use_internet:
                 try:
                     if response.candidates[0].grounding_metadata.search_entry_point:
@@ -181,7 +177,7 @@ if st.button("🔍 Diagnose / Send", type="primary"):
                 except:
                     pass
 
-            # Audio Polish (Clean Text)
+            # Audio Polish
             def clean_for_audio(text):
                 text = text.replace("*", "").replace("#", "").replace("- ", "")
                 emojis = ["🛑", "📝", "💊", "📢", "🌍", "🔎", "🗣", "🌾", "👁", "🎧", "✅"]
