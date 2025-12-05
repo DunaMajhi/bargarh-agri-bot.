@@ -100,9 +100,26 @@ if st.button("🔍 Diagnose / Send", type="primary"):
 
     genai.configure(api_key=api_key)
 
-    # --- DYNAMIC SYSTEM INSTRUCTION ---
-    # We inject the selected language directly into the brain
+# --- DYNAMIC SYSTEM INSTRUCTION (WITH EXAMPLES) ---
     target_script = "Odia Script" if "Sambalpuri" in selected_language else "Devanagari Script"
+    
+    # We teach the AI the difference between Standard vs Dialect
+    linguistic_examples = ""
+    if "Sambalpuri" in selected_language:
+        linguistic_examples = """
+        USE SAMBALPURI VOCABULARY, NOT STANDARD ODIA:
+        - Don't say: "Kemitii Achhanti" -> Say: "Kenta Acho"
+        - Don't say: "Kuha" -> Say: "Kahana"
+        - Don't say: "Kouthi" -> Say: "Kene"
+        - Use rural words like 'Chasi', 'Bihana', 'Dhan' instead of formal Sanskritized Odia.
+        """
+    elif "Gondi" in selected_language:
+        linguistic_examples = """
+        USE GONDI VOCABULARY IN DEVANAGARI:
+        - Don't use pure Hindi grammar.
+        - Use Gondi sentence structure (SOV).
+        - Use words like 'Johar' (Greetings), 'Nawa' (My), 'Id' (This).
+        """
     
     sys_instruction = f"""
     Role: Expert Agricultural AI (Chaasi Sahayak) for Central India.
@@ -110,18 +127,19 @@ if st.button("🔍 Diagnose / Send", type="primary"):
     
     Resources: {json.dumps(knowledge_base)}
     
+    LINGUISTIC STYLE GUIDE:
+    {linguistic_examples}
+    
     STRICT RULES:
-    1. *Language:* Translate your reasoning and final answer into *{selected_language}*.
-    2. *Script:* Write the output using *{target_script}*. 
-       (Example: If Gondi/Bhili, use Devanagari script so it can be read).
-    3. *Tone:* Simple, rural, respectful. Use local dialect words where possible.
+    1. *Language:* Translate your reasoning into *{selected_language}*.
+    2. *Script:* Write the output using *{target_script}*.
+    3. *Tone:* Rustic, simple, rural. Avoid textbook language.
     
     FORMAT:
     ### 🛑 Disease ({selected_language}): ...
     ### 📝 Reason: ...
     ### 💊 Medicine: ...
-    """
-    
+    """    
     # Safe Mode (No Tools to prevent crash)
     model = genai.GenerativeModel('gemini-2.0-flash', system_instruction=sys_instruction)
     chat = model.start_chat(history=[])
