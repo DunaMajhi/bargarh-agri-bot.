@@ -5,12 +5,11 @@ from streamlit_mic_recorder import mic_recorder
 from gtts import gTTS
 import io
 from PIL import Image
-import time
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(page_title="Chaasi Sahayak", page_icon="🌾", layout="wide")
 
-# --- CUSTOM CSS (Visual Polish) ---
+# --- CUSTOM CSS ---
 st.markdown("""
 <style>
     .stButton>button {
@@ -30,8 +29,11 @@ st.markdown("""
 # --- LOAD DATA ---
 @st.cache_data
 def load_data():
-    with open('diseases.json', 'r') as f:
-        return json.load(f)
+    try:
+        with open('diseases.json', 'r') as f:
+            return json.load(f)
+    except:
+        return []
 
 knowledge_base = load_data()
 
@@ -44,7 +46,6 @@ with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/628/628283.png", width=50)
     st.title("Settings")
     
-    # 1. LANGUAGE
     selected_language = st.selectbox(
         "🗣 Bhasha (Language):",
         ["Sambalpuri (Odia Script)", "Chhattisgarhi (Devanagari)", "Gondi (Devanagari)", "Bhili (Devanagari)", "Hindi", "English"]
@@ -52,17 +53,13 @@ with st.sidebar:
     
     st.divider()
     
-    # 2. INTERNET MODE
-    use_internet = st.toggle("🌍 Enable Google Search", value=False, help="Turn ON to search the web for new diseases.")
-    
-    st.divider()
+    use_internet = st.toggle("🌍 Google Search", value=False)
     
     if "GOOGLE_API_KEY" in st.secrets:
         api_key = st.secrets["GOOGLE_API_KEY"]
     else:
         api_key = st.text_input("Enter Google API Key", type="password")
     
-    # History Container
     st.subheader("📜 History")
     with st.container(height=300):
         for message in st.session_state.chat_history:
@@ -76,7 +73,7 @@ with st.sidebar:
 
 # --- MAIN INTERFACE ---
 st.title("🌾 Chaasi Sahayak")
-st.caption(f"AI Doctor speaking *{selected_language}* | Internet: *{'ON' if use_internet else 'OFF'}*")
+st.caption(f"AI Doctor speaking *{selected_language}*")
 
 # --- INPUTS ---
 tab1, tab2, tab3 = st.tabs(["✍ Text", "🎤 Voice", "📸 Photo"])
@@ -90,7 +87,7 @@ with tab1:
 
 with tab2:
     st.write("Tap to Speak:")
-    audio = mic_recorder(start_prompt="🎤 Start Recording", stop_prompt="⏹ Stop", key='recorder', format="wav")
+    audio = mic_recorder(start_prompt="🎤 Start", stop_prompt="⏹ Stop", key='recorder', format="wav")
     if audio:
         user_input = {"mime_type": "audio/wav", "data": audio['bytes']}
 
@@ -113,40 +110,45 @@ if st.button("🔍 Diagnose / Send", type="primary"):
         st.warning("⚠ Please provide input!")
         st.stop()
 
-    # History Update
-    history_label = "📸 [Photo]" if image_input else "🎤 [Audio]" if isinstance(user_input, dict) else user_input
-    st.session_state.chat_history.append({"role": "user", "content": history_label})
+    # Save to history
+    st.session_state.chat_history.append({"role": "user", "content": "📸 [Image]" if image_input else "🎤 [Audio]" if isinstance(user_input, dict) else user_input})
 
     genai.configure(api_key=api_key)
 
-    # --- SYSTEM INSTRUCTION ---
     target_script = "Odia Script" if "Sambalpuri" in selected_language else "Devanagari Script"
     
     sys_instruction = f"""
-    Role: Expert Agricultural AI (Chaasi Sahayak) for Central India.
-    Current Mode: Speaking *{selected_language}*.
-    
+    Role: Expert Agricultural AI (Chaasi Sahayak).
+    Mode: Speaking {selected_language}.
     Resources: {json.dumps(knowledge_base)}
     
-    STRICT RULES:
-    1. *Language:* Translate your reasoning into *{selected_language}*.
-    2. *Script:* Write the output using *{target_script}*.
-    3. *Tone:* Rustic, simple, rural. "Village Elder" persona.
-    4. *Formatting:* Use bolding and bullet points.
-    
-    FORMAT:
-    ### 🛑 Disease ({selected_language}): ...
-    ### 📝 Reason: ...
-    ### 💊 Medicine: ...
+    RULES:
+    1. Translate output to {selected_language} using {target_script}.
+    2. Tone: Simple, rural, 'Village Elder'.
+    3. FORMAT:
+       ### 🛑 Disease ({selected_language}): ...
+       ### 📝 Reason: ...
+       ### 💊 Medicine: ...
     """
     
-    # --- DYNAMIC CONFIG ---
+    # --- FAIL-SAFE MODEL LOADING ---
+    model = None
+    
+    # 1. Try to load with Search Tools
     if use_internet:
-        tools = [{"google_search": {}}]
-        model = genai.GenerativeModel('gemini-2.0-flash', system_instruction=sys_instruction, tools=tools)
+        try:
+            # We use the dictionary syntax which is safer for Streamlit
+            tools = [{"google_search": {}}]
+            model = genai.GenerativeModel('gemini-2.0-flash', system_instruction=sys_instruction, tools=tools)
+        except Exception:
+            # If server crashes, silently fallback to normal mode
+            model = genai.GenerativeModel('gemini-2.0-flash', system_instruction=sys_instruction)
+            st.toast("⚠ Search unavailable. Using Offline Mode.", icon="📡")
     else:
+        # Normal mode
         model = genai.GenerativeModel('gemini-2.0-flash', system_instruction=sys_instruction)
 
+    # --- EXECUTION ---
     chat = model.start_chat(history=[])
     
     inputs_to_send = []
@@ -158,26 +160,16 @@ if st.button("🔍 Diagnose / Send", type="primary"):
     elif user_input: 
         inputs_to_send.append(user_input)
 
-    # --- GET RESPONSE ---
-    with st.spinner("🤖 Bhabuchhe... (Thinking...)"):
+    with st.spinner("🤖 Bhabuchhe..."):
         try:
             response = chat.send_message(inputs_to_send)
             ai_text = response.text
             
-            # Display Result (NO BALLOONS)
             st.success("✅ Diagnosis Complete!")
             st.markdown(f"### 📢 Result:")
             st.markdown(ai_text)
             
-            # Show Search Proof
-            if use_internet:
-                try:
-                    if response.candidates[0].grounding_metadata.search_entry_point:
-                         st.info("🔎 Used Google Search for this answer.")
-                except:
-                    pass
-
-            # Audio Polish
+            # Audio
             def clean_for_audio(text):
                 text = text.replace("*", "").replace("#", "").replace("- ", "")
                 emojis = ["🛑", "📝", "💊", "📢", "🌍", "🔎", "🗣", "🌾", "👁", "🎧", "✅"]
