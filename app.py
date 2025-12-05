@@ -155,26 +155,37 @@ if st.button("🔍 Diagnose / Send", type="primary"):
     elif user_input: 
         inputs_to_send.append(user_input)
 
-    # --- GET RESPONSE ---
+# --- 3. GET RESPONSE ---
     with st.spinner("🤖 Bhabuchhe..."):
         try:
             response = chat.send_message(inputs_to_send)
             ai_text = response.text
             
-            # Display
+            # Display Result (Keep Emojis for Visuals)
             st.markdown("### 📢 Result:")
             st.markdown(ai_text)
             
-            # TTS Logic (The Hack)
-            # If Sambalpuri -> Use Hindi engine (closest to Odia/Eastern Aryan phonetics available in free tier)
-            # If Gondi/Bhili -> Use Hindi engine (reads Devanagari perfectly)
-            clean_text = ai_text.replace("*", "").replace("#", "")
-            tts = gTTS(text=clean_text, lang='hi')
+            # --- CLEAN TEXT FOR AUDIO (Remove Emojis & Markdown) ---
+            def clean_for_audio(text):
+                # 1. Remove Markdown
+                text = text.replace("*", "").replace("#", "").replace("- ", "")
+                
+                # 2. Remove Specific Emojis (The ones we use in prompts)
+                emojis_to_remove = ["🛑", "📝", "💊", "📢", "🌍", "🔎", "🗣", "🌾", "👁", "🎧"]
+                for emoji in emojis_to_remove:
+                    text = text.replace(emoji, "")
+                
+                return text
+
+            speech_text = clean_for_audio(ai_text)
             
+            # Generate Audio
+            tts = gTTS(text=speech_text, lang='hi')
             sound_file = io.BytesIO()
             tts.write_to_fp(sound_file)
             st.audio(sound_file, format='audio/mp3', start_time=0)
 
+            # Save to History
             st.session_state.chat_history.append({"role": "assistant", "content": ai_text})
             
         except Exception as e:
